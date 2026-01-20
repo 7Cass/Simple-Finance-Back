@@ -20,7 +20,10 @@ async function bootstrap() {
 
   // Enable CORS with credentials support
   app.enableCors({
-    origin: ['http://localhost:3001', 'http://localhost:3000'], // Frontend URLs
+    origin: [
+      'http://localhost:3001', // Development frontend
+      'https://simple-finance-front.vercel.app', // Production frontend (Vercel)
+    ],
     credentials: true, // Allow cookies to be sent
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Authorization',
