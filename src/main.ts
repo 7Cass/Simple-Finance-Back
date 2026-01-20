@@ -21,7 +21,7 @@ async function bootstrap() {
   // Enable CORS with credentials support
   app.enableCors({
     origin: [
-      'http://localhost:3001', // Development frontend
+      'http://localhost:3000', // Development frontend
       'https://simple-finance-front.vercel.app', // Production frontend (Vercel)
     ],
     credentials: true, // Allow cookies to be sent
@@ -29,7 +29,7 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type, Authorization',
   });
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3001;
   await app.listen(port);
   console.log(`🚀 Application is running on: http://localhost:${port}`);
   console.log(`📡 CORS enabled for: http://localhost:3001`);
