@@ -1,0 +1,170 @@
+// This is your Prisma schema file
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  password      String
+  name          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  bankAccounts  BankAccount[]
+  creditCards   CreditCard[]
+  transactions  Transaction[]
+  categories    Category[]
+}
+
+model BankAccount {
+  id            String          @id @default(uuid())
+  name          String
+  type          AccountType
+  balanceCents  Int             @default(0)
+  userId        String
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  deleted       Boolean         @default(false)
+  deletedAt     DateTime?
+
+  transactions  Transaction[]
+}
+
+model CreditCard {
+  id              String              @id @default(uuid())
+  name            String
+  lastFourDigits  String
+  limitCents      Int
+  closingDay      Int
+  dueDay          Int
+  userId          String
+  user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  deleted         Boolean             @default(false)
+  deletedAt       DateTime?
+
+  transactions    Transaction[]
+  bills           CreditCardBill[]
+}
+
+model Transaction {
+  id                String              @id @default(uuid())
+  description       String
+  amountCents       Int
+  type              TransactionType
+  paymentMethod     PaymentMethod
+  date              DateTime
+  status            TransactionStatus   @default(PENDING)
+  
+  // Parcelamento
+  isInstallment     Boolean             @default(false)
+  installmentNumber Int?
+  totalInstallments Int?
+  parentId          String?
+  parent            Transaction?        @relation("InstallmentRelation", fields: [parentId], references: [id])
+  children          Transaction[]       @relation("InstallmentRelation")
+  
+  // Recorrência
+  isRecurring       Boolean             @default(false)
+  recurrenceRule    RecurrenceRule?
+  recurrenceEndDate DateTime?
+  
+  // Relacionamentos
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId        String?
+  category          Category?           @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  bankAccountId     String?
+  bankAccount       BankAccount?        @relation(fields: [bankAccountId], references: [id], onDelete: SetNull)
+  creditCardId      String?
+  creditCard        CreditCard?         @relation(fields: [creditCardId], references: [id], onDelete: SetNull)
+  billId            String?
+  bill              CreditCardBill?     @relation(fields: [billId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  deleted           Boolean             @default(false)
+  deletedAt         DateTime?
+}
+
+model CreditCardBill {
+  id                String          @id @default(uuid())
+  creditCardId      String
+  creditCard        CreditCard      @relation(fields: [creditCardId], references: [id], onDelete: Cascade)
+  
+  referenceMonth    DateTime
+  closingDate       DateTime
+  dueDate           DateTime
+  totalAmountCents  Int             @default(0)
+  paidAmountCents   Int             @default(0)
+  status            BillStatus      @default(OPEN)
+  
+  transactions      Transaction[]
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  @@unique([creditCardId, referenceMonth])
+}
+
+model Category {
+  id            String          @id @default(uuid())
+  name          String
+  type          TransactionType
+  icon          String?
+  color         String?
+  userId        String?
+  user          User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isDefault     Boolean         @default(false)
+  
+  transactions  Transaction[]
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT
+  CASH
+  TRANSFER
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum RecurrenceRule {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum BillStatus {
+  OPEN
+  CLOSED
+  PAID
+  OVERDUE
+}
